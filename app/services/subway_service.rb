@@ -40,44 +40,46 @@ class SubwayService
 
   private
 
-  def self.get_feed(route)
-    url = feeds_by_route(route)
-    uri = URI.parse(url)
+  class << self
+    def get_feed(route)
+      url = feeds_by_route(route)
+      uri = URI.parse(url)
 
-    res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
-      req = Net::HTTP::Get.new(uri)
-      req["x-api-key"] = @api_key
-      http.request(req)
+      res = Net::HTTP.start(uri.hostname, uri.port, use_ssl: true) do |http|
+        req = Net::HTTP::Get.new(uri)
+        req["x-api-key"] = @api_key
+        http.request(req)
+      end
+
+      Transit_realtime::FeedMessage.decode(res.body)
     end
 
-    Transit_realtime::FeedMessage.decode(res.body)
-  end
+    def arriving(mins_away, arrival_time)
+      timestamp = Time.at(arrival_time).strftime("%H:%M")
+      "#{mins_away.to_s} min (#{timestamp})"
+    end
 
-  def self.arriving(mins_away, arrival_time)
-    timestamp = Time.at(arrival_time).strftime("%H:%M")
-    "#{mins_away.to_s} min (#{timestamp})"
-  end
+    def natural_sort(array)
+      array.sort_by! { |e| e.split(/(\d+)/).map { |a| a =~ /\d+/ ? a.to_i : a } }
+    end
 
-  def self.natural_sort(array)
-    array.sort_by! { |e| e.split(/(\d+)/).map { |a| a =~ /\d+/ ? a.to_i : a } }
-  end
-
-  def self.feeds_by_route(route)
-    base = "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs"
-    feeds = {
-      "#{base}" => ["1", "2", "3", "4", "5", "6", "6X", "GS"],
-      "#{base}-7" => ["7", "7X"],
-      "#{base}-ace" => ["A", "C", "E", "H", "FS"],
-      "#{base}-bdfm" => ["B", "D", "F", "M"],
-      "#{base}-nqrw" => ["N", "Q", "R", "W"],
-      "#{base}-g" => ["G"],
-      "#{base}-l" => ["L"],
-      "#{base}-si" => ["SI"],
-      "#{base}-jz" => ["J", "Z"],
-    }
-    feeds.each { |key, val|
-      return key if val.include? route
-    }
-    nil
+    def feeds_by_route(route)
+      base = "https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/nyct%2Fgtfs"
+      feeds = {
+        "#{base}" => ["1", "2", "3", "4", "5", "6", "6X", "GS"],
+        "#{base}-7" => ["7", "7X"],
+        "#{base}-ace" => ["A", "C", "E", "H", "FS"],
+        "#{base}-bdfm" => ["B", "D", "F", "M"],
+        "#{base}-nqrw" => ["N", "Q", "R", "W"],
+        "#{base}-g" => ["G"],
+        "#{base}-l" => ["L"],
+        "#{base}-si" => ["SI"],
+        "#{base}-jz" => ["J", "Z"],
+      }
+      feeds.each { |key, val|
+        return key if val.include? route
+      }
+      nil
+    end
   end
 end

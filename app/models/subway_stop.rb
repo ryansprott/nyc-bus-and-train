@@ -12,7 +12,7 @@ class SubwayStop < ApplicationRecord
   def to_h
     {
       label: label,
-      value: gtfs_id,
+      value: gtfs_id
     }
   end
 end

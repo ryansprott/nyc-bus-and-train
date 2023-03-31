@@ -10,7 +10,7 @@ class BusStop < ApplicationRecord
   def to_h
     {
       label: label,
-      value: code,
+      value: code
     }
   end
 end
